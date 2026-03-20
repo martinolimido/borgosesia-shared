@@ -57,11 +57,11 @@ public class RemoteJwtAuthFilter extends OncePerRequestFilter {
             ResponseEntity<String> authResponse = restTemplate.exchange(
                     authUrl, HttpMethod.GET, entity, String.class);
 
-            logger.info("Response: " + authResponse.getBody());
+            logger.debug("Response: " + authResponse.getBody());
 
             JsonNode root = objectMapper.readTree(authResponse.getBody());
 
-            logger.info("error: " + root.path("error").asBoolean());
+            logger.debug("error: " + root.path("error").asBoolean());
             if (!root.path("error").asBoolean() && root.path("utente").path("attivo").asBoolean()) {
                 String username = root.path("utente").path("username").asText();
                 List<SimpleGrantedAuthority> authorities = Collections.emptyList();
@@ -70,7 +70,7 @@ public class RemoteJwtAuthFilter extends OncePerRequestFilter {
                         root.path("utente").get("extra").has("permessi")) {
 
                     JsonNode permessiNode = root.path("utente").path("extra").path("permessi");
-                    logger.info("permessiNode: " + permessiNode);
+                    logger.debug("permessiNode: " + permessiNode);
                     if (permessiNode.isArray()) {
                         List<String> permessi = objectMapper.convertValue(
                                 permessiNode,
@@ -80,17 +80,16 @@ public class RemoteJwtAuthFilter extends OncePerRequestFilter {
                                 .map(SimpleGrantedAuthority::new)
                                 .collect(Collectors.toList());
 
-                        logger.info("authorities: " + authorities);
+                        logger.debug("authorities: " + authorities);
                     }
                 }
 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         username, null, authorities);
-                System.out.println("authToken: " + authToken);
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                logger.info("Utente autenticato: {}", username);
+                logger.debug("Utente autenticato: {}", username);
             }
 
         } catch (Exception e) {
